@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>AI Phishing Detector</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --brand: #00b4d8;
+            --danger: #d32f2f;
+            --success: #2e7d32;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f8fb;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        header {
+            background: linear-gradient(90deg, #0077b6, #00b4d8);
+            color: white;
+            padding: 22px 0;
+            margin-bottom: 32px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.3rem;
+        }
+
+        form {
+            background: #fff;
+            max-width: 520px;
+            padding: 25px;
+            margin: 0 auto;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 1s ease-out;
+        }
+
+        input[type="file"] {
+            margin-bottom: 15px;
+        }
+
+        input[type="submit"] {
+            background: var(--brand);
+            color: #fff;
+            border: none;
+            padding: 10px 26px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background: #0077b6;
+        }
+
+        .result {
+            margin-top: 28px;
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        ul.cues {
+            margin-top: 15px;
+            text-align: left;
+            display: inline-block;
+            padding-left: 0;
+        }
+
+        ul.cues li {
+            background: #e3f2fd;
+            padding: 9px 12px;
+            margin: 6px 0;
+            border-left: 5px solid var(--brand);
+            border-radius: 4px;
+            list-style: none;
+        }
+
+        /* ALERT STYLES */
+        .warning-banner {
+            background: var(--danger);
+            color: #fff;
+            padding: 18px;
+            margin-top: 25px;
+            border-radius: 6px;
+            animation: shake 0.4s ease-in-out 6, blink 1s steps(2, start) 6;
+        }
+
+        .pulse-icon {
+            animation: pulse 1.5s infinite;
+            color: #fff;
+            font-size: 2.2rem;
+            margin-right: 10px;
+        }
+
+        /* ✅ SAFE BANNER */
+        .safe-banner {
+            background: var(--success);
+            color: white;
+            padding: 18px;
+            margin-top: 25px;
+            border-radius: 6px;
+            animation: fadeIn 2s ease-in, bounceIn 0.6s ease-in-out;
+        }
+
+        .check-icon {
+            animation: bounce 1.2s infinite;
+            color: white;
+            font-size: 2.2rem;
+            margin-right: 10px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1><i class="fas fa-robot"></i> AI-Powered Phishing Detector</h1>
+        <p>Upload a suspicious document and let AI decide 🧠</p>
+    </header>
+
+    <form method="post" enctype="multipart/form-data">
+        <input type="file" name="file" required><br>
+        <input type="submit" value="Analyze File">
+    </form>
+
+    {% if result %}
+    <div class="result">{{ result }}</div>
+
+    {% if is_phishing %}
+    <div class="warning-banner">
+        <i class="fas fa-triangle-exclamation pulse-icon"></i>
+        Caution! Potential phishing content detected – do <u>NOT</u> click any links!
+    </div>
+    <audio autoplay>
+        <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
+    </audio>
+    {% else %}
+    <div class="safe-banner">
+        <i class="fas fa-check-circle check-icon"></i>
+        This document appears to be safe and trustworthy.
+    </div>
+    <audio autoplay>
+        <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg">
+    </audio>
+    {% endif %}
+
+    <h4 style="margin-top:25px">Phishing Cues Identified:</h4>
+    <ul class="cues">
+        {% for cue in cues %}
+        <li><i class="fas fa-info-circle"></i> {{ cue }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+</body>
+
+</html>
