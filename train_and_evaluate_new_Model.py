@@ -1,16 +1,16 @@
 import os
+import re
 import pandas as pd
 from bs4 import BeautifulSoup
 from docx import Document
-import re
 import unicodedata
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression # Or your preferred model
 from sklearn.metrics import classification_report, accuracy_score
 import joblib
+import scipy.sparse as sp
 
-# --- Helper Functions (Copied from your app.py, slightly modified for batch processing) ---
 def extract_text(file_path):
     ext = file_path.split('.')[-1].lower()
     if ext == 'html':
@@ -23,7 +23,7 @@ def extract_text(file_path):
 def sanitize_text(text):
     return unicodedata.normalize("NFKD", text).encode("utf-8", "ignore").decode("utf-8", "ignore")
 
-# --- New Feature Engineering Functions ---
+# --- New Functions ---
 def count_links(html_content):
     if not html_content:
         return 0
@@ -47,7 +47,7 @@ def has_script_tags(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
     return 1 if soup.find_all('script') else 0
 
-# --- Main Training Script ---
+# --- --- --- --- --- --- ---- --- --- --- --- --- ---
 def train_new_model(dataset_path='dataset', model_output_path='New_Model', vectorizer_output_path='New_Model'):
     """
     Loads email data, extracts features, trains a new model, and saves it.
@@ -59,7 +59,7 @@ def train_new_model(dataset_path='dataset', model_output_path='New_Model', vecto
     data = []
     labels = [] # Labels: 0 for legitimate, 1 for phishing
 
-    # Load legitimate emails
+    #  legitimate emails
     legit_path = os.path.join(dataset_path, 'legitimate')
     for filename in os.listdir(legit_path):
         file_path = os.path.join(legit_path, filename)
@@ -72,7 +72,7 @@ def train_new_model(dataset_path='dataset', model_output_path='New_Model', vecto
             })
             labels.append(0)
 
-    # Load phishing emails
+    #   phishing emails
     phishing_path = os.path.join(dataset_path, 'phishing')
     for filename in os.listdir(phishing_path):
         file_path = os.path.join(phishing_path, filename)
@@ -110,16 +110,18 @@ def train_new_model(dataset_path='dataset', model_output_path='New_Model', vecto
     X_train_tfidf = vectorizer.fit_transform(X_train)
     X_test_tfidf = vectorizer.transform(X_test)
 
+    # region 
+
     # Convert new features to a sparse matrix or append them directly
     # For simplicity, let's convert them to a dense numpy array and combine
-    # You might need to adjust this depending on your model's input requirements
-    import scipy.sparse as sp
     X_train_engineered_features = sp.csc_matrix(df.loc[X_train.index, ['num_links', 'has_ip_in_url', 'has_script_tags']].values)
     X_test_engineered_features = sp.csc_matrix(df.loc[X_test.index, ['num_links', 'has_ip_in_url', 'has_script_tags']].values)
 
     # Combine TF-IDF features with new engineered features
     X_train_combined = sp.hstack([X_train_tfidf, X_train_engineered_features])
     X_test_combined = sp.hstack([X_test_tfidf, X_test_engineered_features])
+
+    # endregion
 
     # --- Train the Model ---
     print("Training the model...")
