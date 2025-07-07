@@ -100,14 +100,20 @@ def upload_file():
 
         text_features = vectorizer.transform([text])
 
+        # New features extraction
         num_hyperlinks = count_hyperlinks(html_content)
         ip_in_url_flag = has_ip_in_url(html_content)
         script_tags_flag = has_script_tags(html_content)
 
-        numerical_features = np.array([[num_hyperlinks, ip_in_url_flag, script_tags_flag]])
-        numerical_features_sparse = sp.csr_matrix(numerical_features)
-        combined_features = sp.hstack([text_features, numerical_features_sparse])
-
+        # --- --- --- 
+        if control: # Using old model
+            combined_features = text_features
+        else:       # New model
+            numerical_features = np.array([[num_hyperlinks, ip_in_url_flag, script_tags_flag]])
+            numerical_features_sparse = sp.csr_matrix(numerical_features)
+            combined_features = sp.hstack([text_features, numerical_features_sparse])   
+        # --- --- ---    
+        
         model_pred = model.predict(combined_features)[0]
 
         cues = phishing_cues(text)
