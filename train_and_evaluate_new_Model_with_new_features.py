@@ -23,7 +23,8 @@ def extract_text(file_path):
 def sanitize_text(text):
     return unicodedata.normalize("NFKD", text).encode("utf-8", "ignore").decode("utf-8", "ignore")
 
-# --- New Functions ---
+# region --- New Functions ---
+
 def count_links(html_content):
     if not html_content:
         return 0
@@ -47,7 +48,8 @@ def has_script_tags(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
     return 1 if soup.find_all('script') else 0
 
-# --- --- --- --- --- --- ---- --- --- --- --- --- ---
+# endregion --- --- --- --- --- --- ---- --- --- --- --- --- ---
+
 def train_new_model(dataset_path='dataset', model_output_path='New_Model', vectorizer_output_path='New_Model'):
     """
     Loads email data, extracts features, trains a new model, and saves it.
@@ -144,7 +146,6 @@ def train_new_model(dataset_path='dataset', model_output_path='New_Model', vecto
     joblib.dump(vectorizer, os.path.join(vectorizer_output_path, 'vectorizer_with_new_features.pkl'))
     print(f"New model saved to {os.path.join(model_output_path, 'phishing_model_with_new_features.pkl')}")
     print(f"New vectorizer saved to {os.path.join(vectorizer_output_path, 'vectorizer_with_new_features.pkl')}")
-
 
 if __name__ == '__main__':
     train_new_model(dataset_path='dataset')

@@ -10,6 +10,9 @@ from werkzeug.utils import secure_filename
 
 warnings.filterwarnings("ignore") 
 
+
+
+
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -82,14 +85,13 @@ def phishing_cues(txt):
         cues.append("🔐 Sensitive information request")
     return cues
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST']) # flask route decorator
 def upload_file():
     result = None
     displayed_cues = None
     is_phishing = False
 
     if request.method == 'POST':
-        # Check if a file was actually uploaded
 
         file = request.files['file']
         path = os.path.join(UPLOAD_FOLDER, secure_filename(file.filename))
