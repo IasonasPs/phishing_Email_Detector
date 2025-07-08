@@ -7,11 +7,9 @@ import warnings
 import scipy.sparse as sp # Import for combining features in prediction
 import numpy as np # Import for creating dense arrays for numerical features
 from werkzeug.utils import secure_filename
+from app_Utilities import extract_text_and_html
 
 warnings.filterwarnings("ignore") 
-
-
-
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -21,7 +19,7 @@ mPath, vPath = 'model/phishing_model.pkl', 'model/vectorizer.pkl'
 newM_Path, newV_Path = 'New_Model/phishing_model_with_new_features.pkl', 'New_Model/vectorizer_with_new_features.pkl'
 
 # region Control variable to switch between old and new model paths
-control = True
+control = False
 if control:
     modelPath = mPath
     vectorizerPath = vPath
@@ -32,46 +30,6 @@ else:
 model = joblib.load(modelPath)
 vectorizer = joblib.load(vectorizerPath)
 # endregion --- --- --- --- --- --- --- ---
-
-def extract_text_and_html(path):
-    ext = path.split('.')[-1].lower()
-    if ext == 'html':
-        with open(path, encoding='utf-8', errors='ignore') as f:
-            html_content = f.read()
-            soup = BeautifulSoup(html_content, 'html.parser')
-            return soup.get_text(), html_content
-    elif ext == 'docx':
-        return "\n".join(p.text for p in Document(path).paragraphs),""
-    return "",""
-
-def sanitize_text(text):
-    return unicodedata.normalize("NFKD", text).encode("utf-8", "ignore").decode("utf-8", "ignore")
-
-# region New Functions --- --- --- --- --- --- --- --- --- 
-def count_hyperlinks(html_content):
-    if not html_content:
-        return 0
-    soup = BeautifulSoup(html_content, 'html.parser')
-    return len(soup.find_all('a', href=True))
-
-def has_ip_in_url(html_content):
-    if not html_content:
-        return 0
-    soup = BeautifulSoup(html_content, 'html.parser')
-    for a_tag in soup.find_all('a', href=True):
-        href = a_tag['href']
-        if re.search(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', href):
-            return 1
-    return 0
-
-
-def has_script_tags(html_content):
-    if not html_content:
-        return 0
-    soup = BeautifulSoup(html_content, 'html.parser')
-    return 1 if soup.find_all('script') else 0
-# endregion --- --- --- --- --- --- --- --- --- --- --- 
-
 
 def phishing_cues(txt):
     cues = []
@@ -95,6 +53,12 @@ def upload_file():
 
         file = request.files['file']
         path = os.path.join(UPLOAD_FOLDER, secure_filename(file.filename))
+
+        datetime = request.form.get('datetime', None)
+        filename = request.form.get('filename', None)
+
+
+
         file.save(path)
 
         raw_text, html_content = extract_text_and_html(path)
@@ -107,17 +71,16 @@ def upload_file():
         ip_in_url_flag = has_ip_in_url(html_content)
         script_tags_flag = has_script_tags(html_content)
 
-        # --- --- --- 
-        if control: # Using old model
+        # region --- --- --- 
+        if control: # old model
             combined_features = text_features
-        else:       # New model
+        else:       # new model
             numerical_features = np.array([[num_hyperlinks, ip_in_url_flag, script_tags_flag]])
             numerical_features_sparse = sp.csr_matrix(numerical_features)
             combined_features = sp.hstack([text_features, numerical_features_sparse])   
-        # --- --- ---    
+        # endregion --- --- ---    
         
         model_pred = model.predict(combined_features)[0]
-
         cues = phishing_cues(text)
 
         # Modified logic: Only flag as phishing if model predicts 1 AND some cues are found
@@ -141,8 +104,6 @@ def upload_file():
         cues=displayed_cues,
         is_phishing=is_phishing
     )
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)

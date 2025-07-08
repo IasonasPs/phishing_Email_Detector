@@ -50,7 +50,7 @@ def has_script_tags(html_content):
 
 # endregion --- --- --- --- --- --- ---- --- --- --- --- --- ---
 
-def train_new_model(dataset_path='dataset', model_output_path='New_Model', vectorizer_output_path='New_Model'):
+def train_new_model(dataset_path='dataset', model_output_path='New_Model_with_new_features', vectorizer_output_path='New_Model_with_new_features'):
     """
     Loads email data, extracts features, trains a new model, and saves it.
     Args:
