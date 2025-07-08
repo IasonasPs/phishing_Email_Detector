@@ -1,0 +1,23 @@
+<html>
+    <head>
+        <style>
+            body { font-family: Verdana, sans-serif; background-color: #eef1f5; margin: 0; padding: 40px; }
+            .content { background-color: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+            .logo { width: 100px; }
+            .notice { font-size: 18px; color: #222; margin: 20px 0; }
+            .cta { background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 20px; }
+            .slide-in { animation: slideIn 1.5s ease-out; }
+            @keyframes slideIn {
+                from { transform: translateX(-100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="content slide-in">
+            <img src="https://via.placeholder.com/100x40?text=Company+Logo" alt="Company Logo" class="logo"/>
+            <div class="notice">Your invoice for March is ready to view. Please download the attached invoice to review your payment details.</div>
+            <a href="http://company-invoice-download.com" class="cta">Download Invoice</a>
+        </div>
+    </body>
+    </html>

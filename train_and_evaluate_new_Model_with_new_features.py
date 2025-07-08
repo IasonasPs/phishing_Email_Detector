@@ -1,15 +1,17 @@
 import os
 import re
+import joblib
+import unicodedata
 import pandas as pd
 from bs4 import BeautifulSoup
 from docx import Document
-import unicodedata
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression # Or your preferred model
 from sklearn.metrics import classification_report, accuracy_score
-import joblib
 import scipy.sparse as sp
+from app_Utilities.sanitize_text import sanitize_text
+from train_and_evaluate_new_Model_with_new_features import count_links, has_ip_in_url, has_script_tags
 
 def extract_text(file_path):
     ext = file_path.split('.')[-1].lower()
@@ -17,51 +19,15 @@ def extract_text(file_path):
         with open(file_path, encoding='utf-8', errors='ignore') as f:
             return BeautifulSoup(f, 'html.parser').get_text(), f.read() # Return full HTML for new features
     elif ext == 'docx':
-        return "\n".join(p.text for p in Document(file_path).paragraphs), "" # No HTML for docx
+        return "\n".join(p.text for p in Document(file_path).paragraphs), "" 
     return "", ""
 
-def sanitize_text(text):
-    return unicodedata.normalize("NFKD", text).encode("utf-8", "ignore").decode("utf-8", "ignore")
-
-# region --- New Functions ---
-
-def count_links(html_content):
-    if not html_content:
-        return 0
-    soup = BeautifulSoup(html_content, 'html.parser')
-    return len(soup.find_all('a', href=True))
-
-def has_ip_in_url(html_content):
-    if not html_content:
-        return 0
-    soup = BeautifulSoup(html_content, 'html.parser')
-    for a_tag in soup.find_all('a', href=True):
-        href = a_tag['href']
-        # Simple regex for an IP address (IPv4)
-        if re.search(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', href):
-            return 1
-    return 0
-
-def has_script_tags(html_content):
-    if not html_content:
-        return 0
-    soup = BeautifulSoup(html_content, 'html.parser')
-    return 1 if soup.find_all('script') else 0
-
-# endregion --- --- --- --- --- --- ---- --- --- --- --- --- ---
-
 def train_new_model(dataset_path='dataset', model_output_path='New_Model_with_new_features', vectorizer_output_path='New_Model_with_new_features'):
-    """
-    Loads email data, extracts features, trains a new model, and saves it.
-    Args:
-        dataset_path (str): Path to the directory containing 'phishing' and 'legitimate' subdirectories.
-        model_output_path (str): Directory to save the trained model.
-        vectorizer_output_path (str): Directory to save the TF-IDF vectorizer.
-    """
+    
     data = []
-    labels = [] # Labels: 0 for legitimate, 1 for phishing
+    labels = [] # 0 for legitimate, 1 for phishing
 
-    #  legitimate emails
+    #  legitimate 
     legit_path = os.path.join(dataset_path, 'legitimate')
     for filename in os.listdir(legit_path):
         file_path = os.path.join(legit_path, filename)
@@ -74,7 +40,7 @@ def train_new_model(dataset_path='dataset', model_output_path='New_Model_with_ne
             })
             labels.append(0)
 
-    #   phishing emails
+    #   phishing 
     phishing_path = os.path.join(dataset_path, 'phishing')
     for filename in os.listdir(phishing_path):
         file_path = os.path.join(phishing_path, filename)
@@ -115,22 +81,20 @@ def train_new_model(dataset_path='dataset', model_output_path='New_Model_with_ne
     # region 
 
     # Convert new features to a sparse matrix or append them directly
-    # For simplicity, let's convert them to a dense numpy array and combine
     X_train_engineered_features = sp.csc_matrix(df.loc[X_train.index, ['num_links', 'has_ip_in_url', 'has_script_tags']].values)
     X_test_engineered_features = sp.csc_matrix(df.loc[X_test.index, ['num_links', 'has_ip_in_url', 'has_script_tags']].values)
 
-    # Combine TF-IDF features with new engineered features
     X_train_combined = sp.hstack([X_train_tfidf, X_train_engineered_features])
     X_test_combined = sp.hstack([X_test_tfidf, X_test_engineered_features])
 
     # endregion
 
-    # --- Train the Model ---
+    # --- Train  Model ---
     print("Training the model...")
     model = LogisticRegression(max_iter=1000) # You can try other classifiers like RandomForestClassifier, SVM
     model.fit(X_train_combined, y_train)
 
-    # --- Evaluate the Model ---
+    # --- Evaluate  Model ---
     print("\nEvaluating the model...")
     y_pred = model.predict(X_test_combined)
     accuracy = accuracy_score(y_test, y_pred)

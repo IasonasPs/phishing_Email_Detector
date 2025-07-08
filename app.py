@@ -7,7 +7,12 @@ import warnings
 import scipy.sparse as sp # Import for combining features in prediction
 import numpy as np # Import for creating dense arrays for numerical features
 from werkzeug.utils import secure_filename
-from app_Utilities import extract_text_and_html
+from app_Utilities.extract_text_and_html import extract_text_and_html
+from app_Utilities.sanitize_text import   sanitize_text
+from app_Utilities.new_features_Functions import count_hyperlinks, has_ip_in_url, has_script_tags
+from logs_creating import log_phishing_data_to_csv
+
+
 
 warnings.filterwarnings("ignore") 
 
@@ -16,7 +21,7 @@ UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 mPath, vPath = 'model/phishing_model.pkl', 'model/vectorizer.pkl'
-newM_Path, newV_Path = 'New_Model/phishing_model_with_new_features.pkl', 'New_Model/vectorizer_with_new_features.pkl'
+newM_Path, newV_Path = 'New_Model_with_new_features/phishing_model_with_new_features.pkl', 'New_Model_with_new_features/vectorizer_with_new_features.pkl'
 
 # region Control variable to switch between old and new model paths
 control = False
@@ -56,11 +61,9 @@ def upload_file():
 
         datetime = request.form.get('datetime', None)
         filename = request.form.get('filename', None)
-
-
-
         file.save(path)
-
+        
+        print(f"File saved to {path}")
         raw_text, html_content = extract_text_and_html(path)
         text = sanitize_text(raw_text)
 
@@ -97,6 +100,15 @@ def upload_file():
             displayed_cues.append("ℹ️ No HTML content to analyze for links/scripts.")
 
         os.remove(path)
+
+        # Log the phishing detection data
+        log_phishing_data_to_csv(
+            email_filename=filename if filename else secure_filename(file.filename),
+            detection_datetime=datetime if datetime else "N/A",
+            is_phishing=is_phishing,
+            cues=', '.join(displayed_cues)
+        )
+
 
     return render_template(
         'upload.html',
